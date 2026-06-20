@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ if .IsHome }}{{ .Site.Title }} — Free Mortgage Calculators{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <link rel="canonical" href="{{ .Permalink }}">
+  <link rel="stylesheet" href="/css/style.css">
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ .Site.Params.adClient }}" crossorigin="anonymous"></script>
+</head>
+<body>
+  {{ partial "header.html" . }}
+  <div class="site-wrap">
+    <main class="main-content">
+      {{ block "main" . }}{{ end }}
+    </main>
+    <aside class="sidebar">
+      {{ partial "ad-sidebar.html" . }}
+    </aside>
+  </div>
+  {{ partial "footer.html" . }}
+</body>
+</html>

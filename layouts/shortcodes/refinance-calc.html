@@ -1,0 +1,175 @@
+<div class="calc-card">
+  <div class="calc-grid">
+
+    <div class="field">
+      <label for="rf-balance">Current Loan Balance</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="rf-balance" value="280000" min="1000" step="1000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="rf-cur-rate">Current Interest Rate</label>
+      <div class="input-wrap has-suffix">
+        <input type="number" id="rf-cur-rate" value="7.50" min="0.1" max="30" step="0.05">
+        <span class="suffix">%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="rf-cur-term">Remaining Term</label>
+      <div class="input-wrap">
+        <select id="rf-cur-term">
+          <option value="30">30 Years</option>
+          <option value="29">29 Years</option>
+          <option value="28">28 Years</option>
+          <option value="27">27 Years</option>
+          <option value="25">25 Years</option>
+          <option value="20">20 Years</option>
+          <option value="15">15 Years</option>
+          <option value="10">10 Years</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="rf-new-rate">New Interest Rate</label>
+      <div class="input-wrap has-suffix">
+        <input type="number" id="rf-new-rate" value="6.50" min="0.1" max="30" step="0.05">
+        <span class="suffix">%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="rf-new-term">New Loan Term</label>
+      <div class="input-wrap">
+        <select id="rf-new-term">
+          <option value="30">30 Years</option>
+          <option value="20">20 Years</option>
+          <option value="15">15 Years</option>
+          <option value="10">10 Years</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="rf-closing">Closing Costs</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="rf-closing" value="4500" min="0" step="100">
+      </div>
+      <span class="hint">Typically 2–5% of loan amount</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calcRefinance()">Calculate Savings</button>
+    </div>
+  </div>
+
+  <div class="results" id="rf-results">
+    <div class="result-highlight">
+      <div>
+        <div class="big-number" id="rf-monthly-savings">$0</div>
+        <div class="big-label">Monthly Savings</div>
+      </div>
+      <div>
+        <div class="big-number" id="rf-breakeven" style="font-size:1.5rem;color:#374151"></div>
+        <div class="big-label" style="color:#6b7280">Break-Even Point</div>
+      </div>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="val" id="rf-cur-payment">—</div>
+        <div class="lbl">Current Payment</div>
+      </div>
+      <div class="result-item good">
+        <div class="val" id="rf-new-payment">—</div>
+        <div class="lbl">New Payment</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="rf-cur-interest">—</div>
+        <div class="lbl">Remaining Interest (Current)</div>
+      </div>
+      <div class="result-item good">
+        <div class="val" id="rf-new-interest">—</div>
+        <div class="lbl">Total Interest (New)</div>
+      </div>
+      <div class="result-item good">
+        <div class="val" id="rf-lifetime-savings">—</div>
+        <div class="lbl">Lifetime Interest Savings</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="rf-verdict">—</div>
+        <div class="lbl">Should You Refinance?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function calcPayment(loan, annualRate, termYears) {
+    const mr = annualRate / 100 / 12;
+    const n  = termYears * 12;
+    if (mr === 0) return loan / n;
+    return loan * (mr * Math.pow(1+mr,n)) / (Math.pow(1+mr,n)-1);
+  }
+
+  function totalInterest(loan, annualRate, termYears) {
+    return calcPayment(loan, annualRate, termYears) * termYears * 12 - loan;
+  }
+
+  window.calcRefinance = function() {
+    const balance  = parseFloat(document.getElementById('rf-balance').value)   || 0;
+    const curRate  = parseFloat(document.getElementById('rf-cur-rate').value)  || 0;
+    const curTerm  = parseInt(document.getElementById('rf-cur-term').value)    || 30;
+    const newRate  = parseFloat(document.getElementById('rf-new-rate').value)  || 0;
+    const newTerm  = parseInt(document.getElementById('rf-new-term').value)    || 30;
+    const closing  = parseFloat(document.getElementById('rf-closing').value)   || 0;
+
+    if (balance <= 0 || curRate <= 0 || newRate <= 0) return;
+
+    const curPayment = calcPayment(balance, curRate, curTerm);
+    const newPayment = calcPayment(balance, newRate, newTerm);
+    const monthlySavings = curPayment - newPayment;
+    const curInterestRemaining = totalInterest(balance, curRate, curTerm);
+    const newInterestTotal = totalInterest(balance, newRate, newTerm);
+    const lifetimeSavings = curInterestRemaining - newInterestTotal - closing;
+
+    const fmt = v => '$' + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+
+    document.getElementById('rf-cur-payment').textContent  = fmt(curPayment);
+    document.getElementById('rf-new-payment').textContent  = fmt(newPayment);
+    document.getElementById('rf-cur-interest').textContent = fmt(curInterestRemaining);
+    document.getElementById('rf-new-interest').textContent = fmt(newInterestTotal);
+
+    if (monthlySavings > 0) {
+      const breakEvenMonths = closing > 0 ? Math.ceil(closing / monthlySavings) : 0;
+      const breakEvenStr = breakEvenMonths === 0 ? 'No break-even needed' :
+        breakEvenMonths < 12 ? `${breakEvenMonths} months` :
+        `${(breakEvenMonths/12).toFixed(1)} years`;
+      document.getElementById('rf-monthly-savings').textContent = fmt(monthlySavings) + '/mo';
+      document.getElementById('rf-breakeven').textContent = breakEvenStr;
+
+      let verdict;
+      if (breakEvenMonths === 0 || breakEvenMonths <= 24) verdict = '✅ Likely Worth It';
+      else if (breakEvenMonths <= 60) verdict = '⚠️ Consider It';
+      else verdict = '❌ Think Carefully';
+      document.getElementById('rf-verdict').textContent = verdict;
+    } else {
+      document.getElementById('rf-monthly-savings').textContent = '-' + fmt(Math.abs(monthlySavings)) + '/mo';
+      document.getElementById('rf-breakeven').textContent = 'N/A';
+      document.getElementById('rf-verdict').textContent = '❌ Not Recommended';
+    }
+
+    const savingsSign = lifetimeSavings >= 0 ? '' : '-';
+    document.getElementById('rf-lifetime-savings').textContent = savingsSign + fmt(lifetimeSavings);
+
+    document.getElementById('rf-results').classList.add('visible');
+  };
+
+  calcRefinance();
+})();
+</script>

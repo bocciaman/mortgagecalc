@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Affordability Calculator | Mortgage Calculator</title>
+  <meta name="description" content="Find out how much house you can afford based on your income, debts, and down payment. Based on the standard 28/36 debt-to-income guidelines.">
+  <link rel="canonical" href="http://localhost:1313/affordability-calculator/">
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo">🏠 MortgageCalc</a>
+    <nav class="nav">
+      <a href="/mortgage-calculator/">Monthly Payment</a>
+      <a href="/amortization-calculator/">Amortization</a>
+      <a href="/affordability-calculator/">Affordability</a>
+      <a href="/refinance-calculator/">Refinance</a>
+    </nav>
+    <button class="nav-toggle" onclick="document.querySelector('.nav').classList.toggle('open')" aria-label="Menu">☰</button>
+  </div>
+  
+  <div class="ad-banner">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
+         data-ad-slot="1111111111"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+</header>
+
+  <div class="site-wrap">
+    <main class="main-content">
+      
+<div class="page-hero">
+  <h1>Home Affordability Calculator</h1>
+  <p>Find out how much house you can afford based on your income, debts, and down payment. Based on the standard 28/36 debt-to-income guidelines.</p>
+</div>
+<div class="calc-card">
+  <div class="calc-grid">
+
+    <div class="field">
+      <label for="af-income">Annual Household Income</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="af-income" value="100000" min="10000" step="1000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="af-debts">Monthly Debt Payments</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="af-debts" value="500" min="0" step="50">
+      </div>
+      <span class="hint">Car, student loans, credit cards, etc.</span>
+    </div>
+
+    <div class="field">
+      <label for="af-down">Down Payment</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="af-down" value="60000" min="0" step="1000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="af-rate">Interest Rate</label>
+      <div class="input-wrap has-suffix">
+        <input type="number" id="af-rate" value="7.00" min="0.1" max="30" step="0.05">
+        <span class="suffix">%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="af-term">Loan Term</label>
+      <div class="input-wrap">
+        <select id="af-term">
+          <option value="30">30 Years</option>
+          <option value="20">20 Years</option>
+          <option value="15">15 Years</option>
+          <option value="10">10 Years</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="af-tax">Annual Property Tax Rate</label>
+      <div class="input-wrap has-suffix">
+        <input type="number" id="af-tax" value="1.20" min="0" max="5" step="0.05">
+        <span class="suffix">%</span>
+      </div>
+      <span class="hint">Avg. ~1.1% nationally</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calcAffordability()">Calculate Affordability</button>
+    </div>
+  </div>
+
+  <div class="results" id="af-results">
+    <div class="result-highlight">
+      <div>
+        <div class="big-number" id="af-max-price">$0</div>
+        <div class="big-label">Maximum Home Price</div>
+      </div>
+      <div>
+        <div class="big-number" id="af-monthly" style="font-size:1.5rem;color:#374151"></div>
+        <div class="big-label" style="color:#6b7280">Est. Monthly Payment</div>
+      </div>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="val" id="af-max-loan">—</div>
+        <div class="lbl">Max Loan Amount</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="af-front-end">—</div>
+        <div class="lbl">Housing-to-Income Ratio</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="af-back-end">—</div>
+        <div class="lbl">Total Debt-to-Income Ratio</div>
+      </div>
+      <div class="result-item good">
+        <div class="val" id="af-budget-label">—</div>
+        <div class="lbl">Budget Status</div>
+      </div>
+    </div>
+
+    <div class="seo-content" style="margin-top:1rem;">
+      <p id="af-explanation"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  window.calcAffordability = function() {
+    const income  = parseFloat(document.getElementById('af-income').value) || 0;
+    const debts   = parseFloat(document.getElementById('af-debts').value)  || 0;
+    const down    = parseFloat(document.getElementById('af-down').value)   || 0;
+    const rate    = parseFloat(document.getElementById('af-rate').value)   || 0;
+    const term    = parseInt(document.getElementById('af-term').value)     || 30;
+    const taxRate = parseFloat(document.getElementById('af-tax').value)    || 0;
+
+    if (income <= 0 || rate <= 0) return;
+
+    const monthlyIncome = income / 12;
+    const mr = rate / 100 / 12;
+    const n  = term * 12;
+
+    
+    const maxHousing = monthlyIncome * 0.28;
+    
+    const maxTotal   = monthlyIncome * 0.36;
+    const maxHousingBackEnd = maxTotal - debts;
+    const maxMonthlyHousing = Math.min(maxHousing, maxHousingBackEnd);
+
+    
+    
+    
+    function pitiForPrice(homePrice) {
+      const loan = homePrice - down;
+      if (loan <= 0) return 0;
+      const pi = loan * (mr * Math.pow(1+mr,n)) / (Math.pow(1+mr,n)-1);
+      const monthlyTax = homePrice * (taxRate / 100) / 12;
+      return pi + monthlyTax;
+    }
+
+    
+    let lo = down, hi = income * 20;
+    for (let i = 0; i < 50; i++) {
+      const mid = (lo + hi) / 2;
+      if (pitiForPrice(mid) <= maxMonthlyHousing) lo = mid; else hi = mid;
+    }
+    const maxHomePrice = lo;
+    const maxLoan = Math.max(maxHomePrice - down, 0);
+    const monthlyPayment = pitiForPrice(maxHomePrice);
+    const frontEnd = (monthlyPayment / monthlyIncome * 100).toFixed(1);
+    const backEnd  = ((monthlyPayment + debts) / monthlyIncome * 100).toFixed(1);
+
+    const fmt = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+    document.getElementById('af-max-price').textContent  = fmt(maxHomePrice);
+    document.getElementById('af-monthly').textContent    = fmt(monthlyPayment) + '/mo';
+    document.getElementById('af-max-loan').textContent   = fmt(maxLoan);
+    document.getElementById('af-front-end').textContent  = frontEnd + '%';
+    document.getElementById('af-back-end').textContent   = backEnd + '%';
+
+    const backEndNum = parseFloat(backEnd);
+    let status, explanation;
+    if (backEndNum <= 28) {
+      status = '✅ Conservative'; explanation = `Your debt-to-income ratio of ${backEnd}% is well below the 36% guideline, giving you a comfortable cushion for unexpected expenses.`;
+    } else if (backEndNum <= 36) {
+      status = '✅ Good'; explanation = `Your total DTI of ${backEnd}% falls within standard lending guidelines. Most lenders will approve loans at this level.`;
+    } else if (backEndNum <= 43) {
+      status = '⚠️ Stretched'; explanation = `At ${backEnd}% DTI, you may qualify but you'll have less budget flexibility. Consider paying down debts or saving a larger down payment.`;
+    } else {
+      status = '❌ High DTI'; explanation = `A DTI of ${backEnd}% exceeds conventional guidelines. Reduce monthly debts or increase income before applying.`;
+    }
+
+    document.getElementById('af-budget-label').textContent = status;
+    document.getElementById('af-explanation').textContent = explanation;
+    document.getElementById('af-results').classList.add('visible');
+  };
+
+  calcAffordability();
+})();
+</script>
+
+<div class="seo-content">
+<h2 id="how-much-house-can-i-afford">How Much House Can I Afford?</h2>
+<p>This calculator uses the standard <strong>28/36 rule</strong> used by most mortgage lenders to determine how much home you can afford.</p>
+<ul>
+<li><strong>Front-end ratio</strong> — your housing costs (mortgage, taxes, insurance) should not exceed <strong>28%</strong> of your gross monthly income</li>
+<li><strong>Back-end ratio</strong> — all monthly debt payments (housing + car, student loans, credit cards, etc.) should not exceed <strong>36%</strong> of your gross monthly income</li>
+</ul>
+<p>The lower of these two limits determines your maximum affordable monthly payment, which is then reverse-solved into a home price.</p>
+<h2 id="the-2836-rule-explained">The 28/36 Rule Explained</h2>
+<p><strong>Example:</strong> $100,000/year income = $8,333/month gross</p>
+<ul>
+<li>Max housing payment (28%): <strong>$2,333/month</strong></li>
+<li>Max all debts (36%): <strong>$3,000/month</strong></li>
+<li>If you have $500/month in existing debts: max housing = $3,000 - $500 = <strong>$2,500/month</strong></li>
+<li>Your effective limit is the lower of $2,333 and $2,500 → <strong>$2,333/month</strong></li>
+</ul>
+<h2 id="what-counts-as-debt">What Counts as Debt?</h2>
+<p>Include all regular monthly obligations:</p>
+<ul>
+<li>Car loans and leases</li>
+<li>Student loan payments</li>
+<li>Minimum credit card payments</li>
+<li>Personal loan payments</li>
+<li>Child support or alimony</li>
+</ul>
+<p>Do <strong>not</strong> include utilities, groceries, or other living expenses.</p>
+<h2 id="what-isnt-included-here">What Isn&rsquo;t Included Here</h2>
+<p>This calculator gives you a lender-guideline estimate. Your actual approval depends on:</p>
+<ul>
+<li><strong>Credit score</strong> — scores below 620 may limit your options; 740+ gets the best rates</li>
+<li><strong>Employment history</strong> — lenders want 2+ years of steady income</li>
+<li><strong>Asset reserves</strong> — many lenders want 2–6 months of payments in savings</li>
+<li><strong>Loan type</strong> — FHA allows up to 43% DTI; some conventional loans allow up to 50%</li>
+</ul>
+</div>
+
+
+    </main>
+    <aside class="sidebar">
+      <div class="ad-sidebar-slot">
+  <p class="ad-label">Advertisement</p>
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
+       data-ad-slot="2222222222"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<div class="ad-sidebar-slot" style="margin-top:2rem;">
+  <p class="ad-label">Advertisement</p>
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
+       data-ad-slot="3333333333"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+    </aside>
+  </div>
+  <footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-links">
+      <a href="/mortgage-calculator/">Mortgage Calculator</a>
+      <a href="/amortization-calculator/">Amortization Calculator</a>
+      <a href="/affordability-calculator/">Affordability Calculator</a>
+      <a href="/refinance-calculator/">Refinance Calculator</a>
+    </div>
+    <p class="footer-disclaimer">Results are estimates for informational purposes only. Consult a licensed mortgage professional before making financial decisions.</p>
+    <p class="footer-copy">&copy; 2026 MortgageCalc. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>

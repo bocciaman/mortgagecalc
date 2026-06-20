@@ -1,0 +1,168 @@
+<div class="calc-card">
+  <div class="calc-grid">
+
+    <div class="field">
+      <label for="am-loan">Loan Amount</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="am-loan" value="320000" min="1000" step="1000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="am-rate">Annual Interest Rate</label>
+      <div class="input-wrap has-suffix">
+        <input type="number" id="am-rate" value="7.00" min="0.1" max="30" step="0.05">
+        <span class="suffix">%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="am-term">Loan Term</label>
+      <div class="input-wrap">
+        <select id="am-term">
+          <option value="30">30 Years</option>
+          <option value="20">20 Years</option>
+          <option value="15">15 Years</option>
+          <option value="10">10 Years</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="am-start">Start Date</label>
+      <div class="input-wrap">
+        <input type="month" id="am-start">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calcAmort()">Generate Schedule</button>
+    </div>
+  </div>
+
+  <div class="results" id="am-results">
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="val" id="am-payment">—</div>
+        <div class="lbl">Monthly Payment</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="am-total-int">—</div>
+        <div class="lbl">Total Interest</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="am-total-cost">—</div>
+        <div class="lbl">Total Cost</div>
+      </div>
+    </div>
+
+    <div class="amort-controls">
+      <span style="font-size:.9rem;font-weight:600">View:</span>
+      <button class="toggle-btn active" id="am-btn-year" onclick="setView('year')">Yearly</button>
+      <button class="toggle-btn" id="am-btn-month" onclick="setView('month')">Monthly</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="am-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Payment</th>
+            <th>Principal</th>
+            <th>Interest</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody id="am-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Set default start date to next month
+  const startEl = document.getElementById('am-start');
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1);
+  startEl.value = d.toISOString().slice(0, 7);
+
+  let _schedule = [];
+  let _view = 'year';
+
+  window.setView = function(v) {
+    _view = v;
+    document.getElementById('am-btn-year').classList.toggle('active', v === 'year');
+    document.getElementById('am-btn-month').classList.toggle('active', v === 'month');
+    renderTable();
+  };
+
+  window.calcAmort = function() {
+    const loan = parseFloat(document.getElementById('am-loan').value) || 0;
+    const rate = parseFloat(document.getElementById('am-rate').value) || 0;
+    const term = parseInt(document.getElementById('am-term').value) || 30;
+    const startStr = document.getElementById('am-start').value;
+    if (loan <= 0 || rate <= 0) return;
+
+    const mr = rate / 100 / 12;
+    const n = term * 12;
+    const payment = loan * (mr * Math.pow(1 + mr, n)) / (Math.pow(1 + mr, n) - 1);
+
+    let balance = loan;
+    _schedule = [];
+    let [startYear, startMonth] = startStr ? startStr.split('-').map(Number) : [new Date().getFullYear(), new Date().getMonth() + 2];
+
+    let totalInterest = 0;
+
+    for (let i = 1; i <= n; i++) {
+      const interest = balance * mr;
+      const principal = payment - interest;
+      balance = Math.max(balance - principal, 0);
+      totalInterest += interest;
+      const mIdx = (startMonth - 1 + i - 1) % 12;
+      const yr = startYear + Math.floor((startMonth - 1 + i - 1) / 12);
+      _schedule.push({ month: i, year: yr, mName: new Date(yr, mIdx).toLocaleString('en-US',{month:'short'}), interest, principal, balance, payment });
+    }
+
+    const fmt = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    document.getElementById('am-payment').textContent   = fmt(payment);
+    document.getElementById('am-total-int').textContent = fmt(totalInterest);
+    document.getElementById('am-total-cost').textContent = fmt(payment * n);
+    document.getElementById('am-results').classList.add('visible');
+    renderTable();
+  };
+
+  function renderTable() {
+    const tbody = document.getElementById('am-tbody');
+    tbody.innerHTML = '';
+    const fmt = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+
+    if (_view === 'year') {
+      // Group by year
+      const years = {};
+      _schedule.forEach(r => {
+        if (!years[r.year]) years[r.year] = { interest: 0, principal: 0, payment: 0, balance: 0 };
+        years[r.year].interest  += r.interest;
+        years[r.year].principal += r.principal;
+        years[r.year].payment   += r.payment;
+        years[r.year].balance    = r.balance;
+      });
+      Object.entries(years).forEach(([yr, d]) => {
+        const tr = document.createElement('tr');
+        tr.className = 'year-row';
+        tr.innerHTML = `<td>${yr}</td><td>${fmt(d.payment)}</td><td>${fmt(d.principal)}</td><td>${fmt(d.interest)}</td><td>${fmt(d.balance)}</td>`;
+        tbody.appendChild(tr);
+      });
+    } else {
+      _schedule.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.mName} ${r.year}</td><td>${fmt(r.payment)}</td><td>${fmt(r.principal)}</td><td>${fmt(r.interest)}</td><td>${fmt(r.balance)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  calcAmort();
+})();
+</script>

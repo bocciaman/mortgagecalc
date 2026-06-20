@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amortization Calculator | Mortgage Calculator</title>
+  <meta name="description" content="Generate a complete mortgage amortization schedule. See exactly how much goes to principal vs. interest every month or year over the life of your loan.">
+  <link rel="canonical" href="http://localhost:1313/amortization-calculator/">
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo">🏠 MortgageCalc</a>
+    <nav class="nav">
+      <a href="/mortgage-calculator/">Monthly Payment</a>
+      <a href="/amortization-calculator/">Amortization</a>
+      <a href="/affordability-calculator/">Affordability</a>
+      <a href="/refinance-calculator/">Refinance</a>
+    </nav>
+    <button class="nav-toggle" onclick="document.querySelector('.nav').classList.toggle('open')" aria-label="Menu">☰</button>
+  </div>
+  
+  <div class="ad-banner">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
+         data-ad-slot="1111111111"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+</header>
+
+  <div class="site-wrap">
+    <main class="main-content">
+      
+<div class="page-hero">
+  <h1>Amortization Calculator</h1>
+  <p>Generate a complete mortgage amortization schedule. See exactly how much goes to principal vs. interest every month or year over the life of your loan.</p>
+</div>
+<div class="calc-card">
+  <div class="calc-grid">
+
+    <div class="field">
+      <label for="am-loan">Loan Amount</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="am-loan" value="320000" min="1000" step="1000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="am-rate">Annual Interest Rate</label>
+      <div class="input-wrap has-suffix">
+        <input type="number" id="am-rate" value="7.00" min="0.1" max="30" step="0.05">
+        <span class="suffix">%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="am-term">Loan Term</label>
+      <div class="input-wrap">
+        <select id="am-term">
+          <option value="30">30 Years</option>
+          <option value="20">20 Years</option>
+          <option value="15">15 Years</option>
+          <option value="10">10 Years</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="am-start">Start Date</label>
+      <div class="input-wrap">
+        <input type="month" id="am-start">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calcAmort()">Generate Schedule</button>
+    </div>
+  </div>
+
+  <div class="results" id="am-results">
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="val" id="am-payment">—</div>
+        <div class="lbl">Monthly Payment</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="am-total-int">—</div>
+        <div class="lbl">Total Interest</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="am-total-cost">—</div>
+        <div class="lbl">Total Cost</div>
+      </div>
+    </div>
+
+    <div class="amort-controls">
+      <span style="font-size:.9rem;font-weight:600">View:</span>
+      <button class="toggle-btn active" id="am-btn-year" onclick="setView('year')">Yearly</button>
+      <button class="toggle-btn" id="am-btn-month" onclick="setView('month')">Monthly</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="am-table">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Payment</th>
+            <th>Principal</th>
+            <th>Interest</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody id="am-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  
+  const startEl = document.getElementById('am-start');
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1);
+  startEl.value = d.toISOString().slice(0, 7);
+
+  let _schedule = [];
+  let _view = 'year';
+
+  window.setView = function(v) {
+    _view = v;
+    document.getElementById('am-btn-year').classList.toggle('active', v === 'year');
+    document.getElementById('am-btn-month').classList.toggle('active', v === 'month');
+    renderTable();
+  };
+
+  window.calcAmort = function() {
+    const loan = parseFloat(document.getElementById('am-loan').value) || 0;
+    const rate = parseFloat(document.getElementById('am-rate').value) || 0;
+    const term = parseInt(document.getElementById('am-term').value) || 30;
+    const startStr = document.getElementById('am-start').value;
+    if (loan <= 0 || rate <= 0) return;
+
+    const mr = rate / 100 / 12;
+    const n = term * 12;
+    const payment = loan * (mr * Math.pow(1 + mr, n)) / (Math.pow(1 + mr, n) - 1);
+
+    let balance = loan;
+    _schedule = [];
+    let [startYear, startMonth] = startStr ? startStr.split('-').map(Number) : [new Date().getFullYear(), new Date().getMonth() + 2];
+
+    let totalInterest = 0;
+
+    for (let i = 1; i <= n; i++) {
+      const interest = balance * mr;
+      const principal = payment - interest;
+      balance = Math.max(balance - principal, 0);
+      totalInterest += interest;
+      const mIdx = (startMonth - 1 + i - 1) % 12;
+      const yr = startYear + Math.floor((startMonth - 1 + i - 1) / 12);
+      _schedule.push({ month: i, year: yr, mName: new Date(yr, mIdx).toLocaleString('en-US',{month:'short'}), interest, principal, balance, payment });
+    }
+
+    const fmt = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    document.getElementById('am-payment').textContent   = fmt(payment);
+    document.getElementById('am-total-int').textContent = fmt(totalInterest);
+    document.getElementById('am-total-cost').textContent = fmt(payment * n);
+    document.getElementById('am-results').classList.add('visible');
+    renderTable();
+  };
+
+  function renderTable() {
+    const tbody = document.getElementById('am-tbody');
+    tbody.innerHTML = '';
+    const fmt = v => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+
+    if (_view === 'year') {
+      
+      const years = {};
+      _schedule.forEach(r => {
+        if (!years[r.year]) years[r.year] = { interest: 0, principal: 0, payment: 0, balance: 0 };
+        years[r.year].interest  += r.interest;
+        years[r.year].principal += r.principal;
+        years[r.year].payment   += r.payment;
+        years[r.year].balance    = r.balance;
+      });
+      Object.entries(years).forEach(([yr, d]) => {
+        const tr = document.createElement('tr');
+        tr.className = 'year-row';
+        tr.innerHTML = `<td>${yr}</td><td>${fmt(d.payment)}</td><td>${fmt(d.principal)}</td><td>${fmt(d.interest)}</td><td>${fmt(d.balance)}</td>`;
+        tbody.appendChild(tr);
+      });
+    } else {
+      _schedule.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.mName} ${r.year}</td><td>${fmt(r.payment)}</td><td>${fmt(r.principal)}</td><td>${fmt(r.interest)}</td><td>${fmt(r.balance)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  calcAmort();
+})();
+</script>
+
+<div class="seo-content">
+<h2 id="what-is-an-amortization-schedule">What Is an Amortization Schedule?</h2>
+<p>An amortization schedule is a complete table of mortgage payments that shows how each payment is split between <strong>principal</strong> (reducing your loan balance) and <strong>interest</strong> (the lender&rsquo;s fee for the loan).</p>
+<p>In the early years of your mortgage, the vast majority of each payment goes toward interest. As your balance decreases, more of each payment applies to principal. This shift is called <strong>amortization</strong>.</p>
+<h2 id="how-to-read-the-table">How to Read the Table</h2>
+<ul>
+<li><strong>Payment</strong> — your fixed monthly payment (stays the same for a fixed-rate loan)</li>
+<li><strong>Principal</strong> — the amount reducing your balance this period</li>
+<li><strong>Interest</strong> — the cost of borrowing this period</li>
+<li><strong>Balance</strong> — what you still owe after this payment</li>
+</ul>
+<p>Use the <strong>Yearly</strong> view for a quick big-picture summary, or switch to <strong>Monthly</strong> to see every single payment.</p>
+<h2 id="why-does-so-much-go-to-interest-early-on">Why Does So Much Go to Interest Early On?</h2>
+<p>Your interest is calculated on your <strong>remaining balance</strong>. When you&rsquo;ve just taken out a $320,000 loan at 7%, your first month&rsquo;s interest alone is about $1,867. With a monthly payment of ~$2,129, only $262 goes to principal.</p>
+<p>By month 300 (year 25), that same payment is split ~$1,580 principal / $549 interest — because your balance is now much lower.</p>
+<h2 id="tips-for-paying-off-your-mortgage-faster">Tips for Paying Off Your Mortgage Faster</h2>
+<ul>
+<li><strong>Make extra principal payments</strong> — even $100/month extra can cut years off your loan</li>
+<li><strong>Bi-weekly payments</strong> — paying half your mortgage every two weeks results in one extra full payment per year</li>
+<li><strong>Refinance to a shorter term</strong> — switching from 30 to 15 years cuts total interest dramatically</li>
+<li><strong>Round up your payment</strong> — pay $2,200 instead of $2,129 and the extra $71 chips away at principal</li>
+</ul>
+</div>
+
+
+    </main>
+    <aside class="sidebar">
+      <div class="ad-sidebar-slot">
+  <p class="ad-label">Advertisement</p>
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
+       data-ad-slot="2222222222"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<div class="ad-sidebar-slot" style="margin-top:2rem;">
+  <p class="ad-label">Advertisement</p>
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
+       data-ad-slot="3333333333"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+    </aside>
+  </div>
+  <footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-links">
+      <a href="/mortgage-calculator/">Mortgage Calculator</a>
+      <a href="/amortization-calculator/">Amortization Calculator</a>
+      <a href="/affordability-calculator/">Affordability Calculator</a>
+      <a href="/refinance-calculator/">Refinance Calculator</a>
+    </div>
+    <p class="footer-disclaimer">Results are estimates for informational purposes only. Consult a licensed mortgage professional before making financial decisions.</p>
+    <p class="footer-copy">&copy; 2026 MortgageCalc. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mortgage Calculator | Mortgage Calculator</title>
+  <meta name="description" content="Calculate your monthly mortgage payment instantly. Enter your home price, down payment, interest rate, and term to see your full PITI estimate.">
+  <link rel="canonical" href="http://localhost:1313/mortgage-calculator/">
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo">🏠 MortgageCalc</a>
+    <nav class="nav">
+      <a href="/mortgage-calculator/">Monthly Payment</a>
+      <a href="/amortization-calculator/">Amortization</a>
+      <a href="/affordability-calculator/">Affordability</a>
+      <a href="/refinance-calculator/">Refinance</a>
+    </nav>
+    <button class="nav-toggle" onclick="document.querySelector('.nav').classList.toggle('open')" aria-label="Menu">☰</button>
+  </div>
+  
+  <div class="ad-banner">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
+         data-ad-slot="1111111111"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+</header>
+
+  <div class="site-wrap">
+    <main class="main-content">
+      
+<div class="page-hero">
+  <h1>Mortgage Calculator</h1>
+  <p>Calculate your monthly mortgage payment instantly. Enter your home price, down payment, interest rate, and term to see your full PITI estimate.</p>
+</div>
+<div class="calc-card">
+  <div class="calc-grid">
+
+    <div class="field">
+      <label for="mc-price">Home Price</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="mc-price" value="400000" min="10000" step="1000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="mc-down">Down Payment</label>
+      <div class="input-wrap has-suffix">
+        <input type="number" id="mc-down" value="80000" min="0" step="1000">
+        <span class="suffix" id="mc-down-pct">20%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="mc-rate">Annual Interest Rate</label>
+      <div class="input-wrap has-suffix">
+        <input type="number" id="mc-rate" value="7.00" min="0.1" max="30" step="0.05">
+        <span class="suffix">%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="mc-term">Loan Term</label>
+      <div class="input-wrap">
+        <select id="mc-term">
+          <option value="30">30 Years</option>
+          <option value="20">20 Years</option>
+          <option value="15">15 Years</option>
+          <option value="10">10 Years</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="mc-tax">Annual Property Tax</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="mc-tax" value="4800" min="0" step="100">
+      </div>
+      <span class="hint">Optional — for PITI estimate</span>
+    </div>
+
+    <div class="field">
+      <label for="mc-ins">Annual Home Insurance</label>
+      <div class="input-wrap has-prefix">
+        <span class="prefix">$</span>
+        <input type="number" id="mc-ins" value="1200" min="0" step="100">
+      </div>
+      <span class="hint">Optional — for PITI estimate</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calcMortgage()">Calculate Payment</button>
+    </div>
+  </div>
+
+  
+  <div class="results" id="mc-results">
+    <div class="result-highlight">
+      <div>
+        <div class="big-number" id="mc-piti">$0</div>
+        <div class="big-label">Estimated Monthly Payment (PITI)</div>
+      </div>
+      <div>
+        <div class="big-number" id="mc-pi" style="font-size:1.5rem;color:#374151"></div>
+        <div class="big-label" style="color:#6b7280">Principal & Interest only</div>
+      </div>
+    </div>
+
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="val" id="mc-loan-amt">—</div>
+        <div class="lbl">Loan Amount</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="mc-total-int">—</div>
+        <div class="lbl">Total Interest</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="mc-total-paid">—</div>
+        <div class="lbl">Total Paid</div>
+      </div>
+      <div class="result-item">
+        <div class="val" id="mc-payoff">—</div>
+        <div class="lbl">Payoff Date</div>
+      </div>
+    </div>
+
+    
+    <div class="piti-chart">
+      <svg id="mc-pie" width="140" height="140" viewBox="0 0 140 140"></svg>
+      <div class="piti-legend" id="mc-legend"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  
+  const priceEl = document.getElementById('mc-price');
+  const downEl  = document.getElementById('mc-down');
+  const pctLbl  = document.getElementById('mc-down-pct');
+
+  function updatePct() {
+    const p = parseFloat(priceEl.value) || 0;
+    const d = parseFloat(downEl.value)  || 0;
+    pctLbl.textContent = p > 0 ? (d / p * 100).toFixed(1) + '%' : '0%';
+  }
+  priceEl.addEventListener('input', updatePct);
+  downEl.addEventListener('input', updatePct);
+  updatePct();
+
+  window.calcMortgage = function() {
+    const price = parseFloat(priceEl.value)  || 0;
+    const down  = parseFloat(downEl.value)   || 0;
+    const rate  = parseFloat(document.getElementById('mc-rate').value) || 0;
+    const term  = parseInt(document.getElementById('mc-term').value)   || 30;
+    const tax   = parseFloat(document.getElementById('mc-tax').value)  || 0;
+    const ins   = parseFloat(document.getElementById('mc-ins').value)  || 0;
+
+    const loan = price - down;
+    if (loan <= 0 || rate <= 0) return;
+
+    const monthlyRate = rate / 100 / 12;
+    const n = term * 12;
+    const pi = loan * (monthlyRate * Math.pow(1 + monthlyRate, n)) / (Math.pow(1 + monthlyRate, n) - 1);
+    const monthlyTax = tax / 12;
+    const monthlyIns = ins / 12;
+    const piti = pi + monthlyTax + monthlyIns;
+    const totalInterest = pi * n - loan;
+    const totalPaid = piti * n;
+
+    const payoffDate = new Date();
+    payoffDate.setMonth(payoffDate.getMonth() + n);
+    const payoffStr = payoffDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+    document.getElementById('mc-piti').textContent    = fmt(piti);
+    document.getElementById('mc-pi').textContent      = fmt(pi) + ' P&I';
+    document.getElementById('mc-loan-amt').textContent = fmt(loan);
+    document.getElementById('mc-total-int').textContent = fmt(totalInterest);
+    document.getElementById('mc-total-paid').textContent = fmt(totalPaid);
+    document.getElementById('mc-payoff').textContent  = payoffStr;
+
+    
+    drawPie([
+      { label: 'Principal & Interest', value: pi,          color: '#1a56db' },
+      { label: 'Property Tax',         value: monthlyTax,  color: '#f59e0b' },
+      { label: 'Home Insurance',       value: monthlyIns,  color: '#10b981' },
+    ]);
+
+    document.getElementById('mc-results').classList.add('visible');
+  };
+
+  function fmt(n) {
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function drawPie(slices) {
+    const svg = document.getElementById('mc-pie');
+    const legend = document.getElementById('mc-legend');
+    svg.innerHTML = '';
+    legend.innerHTML = '';
+    const total = slices.reduce((s, sl) => s + sl.value, 0);
+    if (total <= 0) return;
+
+    const cx = 70, cy = 70, r = 65;
+    let startAngle = -Math.PI / 2;
+
+    slices.forEach(sl => {
+      if (sl.value <= 0) return;
+      const angle = (sl.value / total) * 2 * Math.PI;
+      const endAngle = startAngle + angle;
+      const x1 = cx + r * Math.cos(startAngle);
+      const y1 = cy + r * Math.sin(startAngle);
+      const x2 = cx + r * Math.cos(endAngle);
+      const y2 = cy + r * Math.sin(endAngle);
+      const large = angle > Math.PI ? 1 : 0;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z`);
+      path.setAttribute('fill', sl.color);
+      svg.appendChild(path);
+      startAngle = endAngle;
+
+      const dot = document.createElement('div');
+      dot.className = 'legend-item';
+      dot.innerHTML = `<span class="legend-dot" style="background:${sl.color}"></span><span>${sl.label}: <strong>${fmt(sl.value)}</strong></span>`;
+      legend.appendChild(dot);
+    });
+  }
+
+  
+  calcMortgage();
+})();
+</script>
+
+<div class="seo-content">
+<h2 id="how-to-use-this-mortgage-calculator">How to Use This Mortgage Calculator</h2>
+<p>Enter your <strong>home price</strong> and <strong>down payment</strong> to calculate your loan amount. Then set your <strong>interest rate</strong> and <strong>loan term</strong>, and optionally add your estimated property taxes and insurance to see your full monthly payment (PITI).</p>
+<p>Hit <strong>Calculate Payment</strong> for an instant breakdown.</p>
+<h2 id="what-is-piti">What Is PITI?</h2>
+<p>PITI stands for <strong>Principal, Interest, Taxes, and Insurance</strong> — the four components that make up a typical monthly mortgage payment:</p>
+<ul>
+<li><strong>Principal</strong> — the portion of each payment that reduces your loan balance</li>
+<li><strong>Interest</strong> — the cost of borrowing, calculated on your remaining balance</li>
+<li><strong>Taxes</strong> — property taxes, usually collected monthly and held in escrow</li>
+<li><strong>Insurance</strong> — homeowners insurance, also typically escrowed</li>
+</ul>
+<p>Most lenders require escrow for taxes and insurance when your down payment is less than 20%.</p>
+<h2 id="30-year-vs-15-year-mortgage">30-Year vs. 15-Year Mortgage</h2>
+<p>A <strong>30-year mortgage</strong> offers lower monthly payments and is the most popular choice. A <strong>15-year mortgage</strong> has higher payments but you&rsquo;ll pay significantly less in total interest — often saving six figures on a typical home loan.</p>
+<p><strong>Example on a $320,000 loan at 7%:</strong></p>
+<ul>
+<li>30-year: ~$2,129/month — $446,450 total interest</li>
+<li>15-year: ~$2,877/month — $197,830 total interest</li>
+<li><strong>Savings with 15-year: ~$248,600 in interest</strong></li>
+</ul>
+<h2 id="what-affects-your-mortgage-rate">What Affects Your Mortgage Rate?</h2>
+<ul>
+<li><strong>Credit score</strong> — higher scores qualify for better rates</li>
+<li><strong>Loan-to-value ratio</strong> — more down payment = lower rate</li>
+<li><strong>Loan type</strong> — conventional, FHA, VA, and USDA loans all carry different rates</li>
+<li><strong>Market conditions</strong> — the Federal Reserve&rsquo;s rate decisions ripple into mortgage markets</li>
+<li><strong>Loan term</strong> — shorter terms usually carry lower rates</li>
+</ul>
+</div>
+
+
+    </main>
+    <aside class="sidebar">
+      <div class="ad-sidebar-slot">
+  <p class="ad-label">Advertisement</p>
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
+       data-ad-slot="2222222222"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<div class="ad-sidebar-slot" style="margin-top:2rem;">
+  <p class="ad-label">Advertisement</p>
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXXX"
+       data-ad-slot="3333333333"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+    </aside>
+  </div>
+  <footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-links">
+      <a href="/mortgage-calculator/">Mortgage Calculator</a>
+      <a href="/amortization-calculator/">Amortization Calculator</a>
+      <a href="/affordability-calculator/">Affordability Calculator</a>
+      <a href="/refinance-calculator/">Refinance Calculator</a>
+    </div>
+    <p class="footer-disclaimer">Results are estimates for informational purposes only. Consult a licensed mortgage professional before making financial decisions.</p>
+    <p class="footer-copy">&copy; 2026 MortgageCalc. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>
