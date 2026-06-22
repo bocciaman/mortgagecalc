@@ -1,10 +1,10 @@
-baseURL = "https://example.com/"
+baseURL = "https://homecalcs.net/"
 languageCode = "en-us"
 title = "Mortgage Calculator"
 
 [params]
   description = "Free mortgage calculators — monthly payment, amortization, affordability, and refinance."
-  adClient = "ca-pub-XXXXXXXXXXXXXXXXX"  # Replace with your AdSense publisher ID
+  adClient = "ca-pub-4393393337555122"
 
 [markup.goldmark.renderer]
   unsafe = true

@@ -1,0 +1,19 @@
+{{ define "main" }}
+<div class="page-hero">
+  <h1>{{ .Title }}</h1>
+  {{ with .Description }}<p>{{ . }}</p>{{ end }}
+</div>
+
+<div class="article-grid">
+  {{ range .Pages.ByDate.Reverse }}
+  <a href="{{ .Permalink }}" class="article-card">
+    {{ with .Params.image }}<div class="article-card-img" style="background-image:url('{{ . }}')"></div>{{ end }}
+    <div class="article-card-body">
+      <span class="article-card-date">{{ .Date.Format "Jan 2, 2006" }}</span>
+      <h2>{{ .Title }}</h2>
+      <p>{{ .Description }}</p>
+    </div>
+  </a>
+  {{ end }}
+</div>
+{{ end }}

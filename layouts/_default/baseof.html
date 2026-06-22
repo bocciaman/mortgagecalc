@@ -7,6 +7,29 @@
   <meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ .Site.Params.description }}{{ end }}">
   <link rel="canonical" href="{{ .Permalink }}">
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="{{ if eq .Section "articles" }}article{{ else }}website{{ end }}">
+  <meta property="og:title" content="{{ if .IsHome }}{{ .Site.Title }} — Free Mortgage Calculators{{ else }}{{ .Title }}{{ end }}">
+  <meta property="og:description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ .Site.Params.description }}{{ end }}">
+  <meta property="og:url" content="{{ .Permalink }}">
+  {{ with .Params.image }}<meta property="og:image" content="{{ . | absURL }}">{{ end }}
+  <meta name="twitter:card" content="summary_large_image">
+
+  {{ if eq .Section "articles" }}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": {{ .Title | jsonify }},
+    "description": {{ .Description | jsonify }},
+    "datePublished": "{{ .Date.Format "2006-01-02" }}",
+    "author": { "@type": "Organization", "name": "HomeCalcs.net" },
+    "publisher": { "@type": "Organization", "name": "HomeCalcs.net" }
+  }
+  </script>
+  {{ end }}
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ .Site.Params.adClient }}" crossorigin="anonymous"></script>
 </head>
