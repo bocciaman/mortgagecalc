@@ -8,7 +8,7 @@
     <span>{{ .Params.readingTime | default "5" }} min read</span>
   </div>
   {{ with .Params.image }}
-  <div class="article-hero-img" style="background-image:url('{{ . }}')"></div>
+  <div class="article-hero-img"><img src="{{ . }}" alt="{{ $.Title }}" width="760" height="280"></div>
   {{ end }}
   <div class="article-body">
     {{ .Content }}

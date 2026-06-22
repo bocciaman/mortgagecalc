@@ -1,6 +1,11 @@
 baseURL = "https://homecalcs.net/"
 languageCode = "en-us"
-title = "Mortgage Calculator"
+title = "HomeCalcs"
+disableKinds = ["taxonomy", "term"]
+
+[sitemap]
+  changeFreq = "weekly"
+  priority = 0.5
 
 [params]
   description = "Free mortgage calculators — monthly payment, amortization, affordability, and refinance."
